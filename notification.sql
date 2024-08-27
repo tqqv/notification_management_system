@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `user` (
  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
  PRIMARY KEY (`id`)
-) ENGINE = InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS `notification_entity` (
 	`entity_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `notification_entity` (
 	`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
      PRIMARY KEY (`entity_id`)
-) ENGINE = InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS `notification_entity_type` (
   `entity_type_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `notification_entity_type` (
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (`entity_id`) REFERENCES `notification_entity`(`entity_id`),
   PRIMARY KEY (`entity_type_id`)
-) ENGINE = InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS `notification_object` (
  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -40,8 +40,7 @@ CREATE TABLE IF NOT EXISTS `notification_object` (
  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
  CONSTRAINT `fk_entity_type` FOREIGN KEY (`entity_type`) REFERENCES `notification_entity_type`(`entity_type_id`),
  CONSTRAINT `fk_entity` FOREIGN KEY (`entity_id`) REFERENCES `notification_entity`(`entity_id`),
- PRIMARY KEY (`id`))
-ENGINE = InnoDB;
+ PRIMARY KEY (`id`));
 
 CREATE TABLE IF NOT EXISTS `notification` (
  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -53,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `notification` (
  PRIMARY KEY (`id`),
  CONSTRAINT `fk_notification_object` FOREIGN KEY (`notification_object_id`) REFERENCES `notification_object` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
  CONSTRAINT `fk_notification_notifier_id` FOREIGN KEY (`notifier_id`) REFERENCES `user` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE = InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS `notification_change` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -64,7 +63,50 @@ CREATE TABLE IF NOT EXISTS `notification_change` (
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_notification_object_2` FOREIGN KEY (`notification_object_id`) REFERENCES `notification_object` (`id`) ,
-  CONSTRAINT `fk_notification_actor_id_idx` FOREIGN KEY (`actor_id`) REFERENCES `user` (`id`))
-ENGINE = InnoDB;
+  CONSTRAINT `fk_notification_actor_id_idx` FOREIGN KEY (`actor_id`) REFERENCES `user` (`id`));
+
+INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('John Doe', '1990-05-15', 1);
+INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('Jane Smith', '1988-10-20', 2);
+INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('Michael Johnson', '1995-03-28', 1);
+INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('Emily Brown', '1992-07-12', 3);
+INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('William Davis', '1985-12-30', 2);
+
+INSERT INTO `notification_entity` (`entity_name`) VALUES ('comment');
+INSERT INTO `notification_entity` (`entity_name`) VALUES ('post');
+INSERT INTO `notification_entity` (`entity_name`) VALUES ('livestream');
+
+INSERT INTO `notification_entity_type` (`type_name`, `entity_id`, `description`)
+VALUES 
+('new comment', (SELECT `entity_id` FROM `notification_entity` WHERE `entity_name`='comment'), 'Có bình luận mới'),
+('reply comment', (SELECT `entity_id` FROM `notification_entity` WHERE `entity_name`='comment'), 'Có người phản hồi'),
+('react comment', (SELECT `entity_id` FROM `notification_entity` WHERE `entity_name`='comment'), 'Có người tương tác với bình luận');
+
+
+
+CREATE TABLE IF NOT EXISTS `post` (
+ `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+ `content` VARCHAR(255) NOT NULL,
+ `thumbnail` VARCHAR(255),
+ `owner` INT UNSIGNED NOT NULL,
+ `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ PRIMARY KEY (`id`),
+ CONSTRAINT `fk_user` FOREIGN KEY (`owner`) REFERENCES `user`(`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `comment` (
+ `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+ `post_id` INT NOT NULL,
+ `content` VARCHAR(255) NOT NULL,
+ `parentComment` INT UNSIGNED,
+ `level` INT, 
+ `owner` INT UNSIGNED NOT NULL,
+ `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ PRIMARY KEY (`id`),
+ CONSTRAINT `fk_post_comment` FOREIGN KEY (`post_id`) REFERENCES `post` (`id`),
+ CONSTRAINT `fk_user_2` FOREIGN KEY (`owner`) REFERENCES `user` (`id`),
+ CONSTRAINT `fk_parent_comment` FOREIGN KEY (`parentComment`) REFERENCES `comment` (`id`)
+);
 
 
