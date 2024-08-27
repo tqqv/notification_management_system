@@ -1,0 +1,70 @@
+CREATE DATABASE IF NOT EXISTS `notification_management`;
+USE `notification_management`;
+
+
+CREATE TABLE IF NOT EXISTS `user` (
+ `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+ `user_name` VARCHAR(255) NOT NULL,
+ `dob` DATE NOT NULL,
+ `role` INT NOT NULL,
+ `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ PRIMARY KEY (`id`)
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `notification_entity` (
+	`entity_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`entity_name` VARCHAR(255) NOT NULL,
+	`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     PRIMARY KEY (`entity_id`)
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `notification_entity_type` (
+  `entity_type_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type_name` VARCHAR(255) NOT NULL,
+  `entity_id` INT UNSIGNED NOT NULL,
+  `description` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`entity_id`) REFERENCES `notification_entity`(`entity_id`),
+  PRIMARY KEY (`entity_type_id`)
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `notification_object` (
+ `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+ `entity_type` INT UNSIGNED NOT NULL,
+ `entity_id` INT UNSIGNED NOT NULL,
+ `status` TINYINT NOT NULL,
+ `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ CONSTRAINT `fk_entity_type` FOREIGN KEY (`entity_type`) REFERENCES `notification_entity_type`(`entity_type_id`),
+ CONSTRAINT `fk_entity` FOREIGN KEY (`entity_id`) REFERENCES `notification_entity`(`entity_id`),
+ PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `notification` (
+ `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+ `notification_object_id` INT UNSIGNED NOT NULL,
+ `notifier_id` INT UNSIGNED NOT NULL,
+ `status` TINYINT NOT NULL,
+ `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ PRIMARY KEY (`id`),
+ CONSTRAINT `fk_notification_object` FOREIGN KEY (`notification_object_id`) REFERENCES `notification_object` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+ CONSTRAINT `fk_notification_notifier_id` FOREIGN KEY (`notifier_id`) REFERENCES `user` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `notification_change` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `notification_object_id` INT UNSIGNED NOT NULL,
+  `actor_id` INT UNSIGNED NOT NULL,
+  `status` TINYINT NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_notification_object_2` FOREIGN KEY (`notification_object_id`) REFERENCES `notification_object` (`id`) ,
+  CONSTRAINT `fk_notification_actor_id_idx` FOREIGN KEY (`actor_id`) REFERENCES `user` (`id`))
+ENGINE = InnoDB;
+
+
