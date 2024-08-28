@@ -1,112 +1,79 @@
-CREATE DATABASE IF NOT EXISTS `notification_management`;
-USE `notification_management`;
+CREATE DATABASE IF NOT EXISTS `notification_management_system`;
+USE `notification_management_system`;
 
 
-CREATE TABLE IF NOT EXISTS `user` (
- `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
- `user_name` VARCHAR(255) NOT NULL,
- `dob` DATE NOT NULL,
- `role` INT NOT NULL,
- `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
- `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
- PRIMARY KEY (`id`)
+CREATE TABLE `notifications`(
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `entity_type` INT UNSIGNED NOT NULL,
+    `actor_id` INT UNSIGNED NOT NULL,
+    `url` VARCHAR(255) NOT NULL,
+    `room_id` INT NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(), `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP());
+CREATE TABLE `users`(
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_name` VARCHAR(255) NOT NULL,
+    `dob` DATE NOT NULL,
+    `role` INT NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(), `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP());
+CREATE TABLE `notification_visits`(
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `notifier_id` INT UNSIGNED NOT NULL,
+    `notification_id` INT UNSIGNED NOT NULL,
+    `created_at` TIMESTAMP NOT NULL,
+    `updated_at` TIMESTAMP NOT NULL
 );
-
-CREATE TABLE IF NOT EXISTS `notification_entity` (
-	`entity_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-	`entity_name` VARCHAR(255) NOT NULL,
-	`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	`updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-     PRIMARY KEY (`entity_id`)
+CREATE TABLE `posts`(
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `content` VARCHAR(255) NOT NULL,
+    `thumbnail` VARCHAR(255) NULL,
+    `owner_id` INT UNSIGNED NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(), `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP());
+CREATE TABLE `notification_entity_types`(
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `type_name` VARCHAR(255) NOT NULL,
+    `entity_id` INT UNSIGNED NOT NULL,
+    `description` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(), `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP());
+CREATE TABLE `notification_entities`(
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `entity_name` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(), `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP());
+CREATE TABLE `notification_room_settings`(
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `notifier_id` INT UNSIGNED NOT NULL,
+    `room_id` INT NOT NULL,
+    `is_on` BOOLEAN NOT NULL DEFAULT '1',
+    `entity_id` INT UNSIGNED NOT NULL,
+    `is_owner` BOOLEAN NOT NULL DEFAULT '0'
 );
-
-CREATE TABLE IF NOT EXISTS `notification_entity_type` (
-  `entity_type_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `type_name` VARCHAR(255) NOT NULL,
-  `entity_id` INT UNSIGNED NOT NULL,
-  `description` VARCHAR(255) NOT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`entity_id`) REFERENCES `notification_entity`(`entity_id`),
-  PRIMARY KEY (`entity_type_id`)
-);
-
-CREATE TABLE IF NOT EXISTS `notification_object` (
- `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
- `entity_type` INT UNSIGNED NOT NULL,
- `entity_id` INT UNSIGNED NOT NULL,
- `status` TINYINT NOT NULL,
- `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
- `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
- CONSTRAINT `fk_entity_type` FOREIGN KEY (`entity_type`) REFERENCES `notification_entity_type`(`entity_type_id`),
- CONSTRAINT `fk_entity` FOREIGN KEY (`entity_id`) REFERENCES `notification_entity`(`entity_id`),
- PRIMARY KEY (`id`));
-
-CREATE TABLE IF NOT EXISTS `notification` (
- `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
- `notification_object_id` INT UNSIGNED NOT NULL,
- `notifier_id` INT UNSIGNED NOT NULL,
- `status` TINYINT NOT NULL,
- `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
- `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
- PRIMARY KEY (`id`),
- CONSTRAINT `fk_notification_object` FOREIGN KEY (`notification_object_id`) REFERENCES `notification_object` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
- CONSTRAINT `fk_notification_notifier_id` FOREIGN KEY (`notifier_id`) REFERENCES `user` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-);
-
-CREATE TABLE IF NOT EXISTS `notification_change` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `notification_object_id` INT UNSIGNED NOT NULL,
-  `actor_id` INT UNSIGNED NOT NULL,
-  `status` TINYINT NOT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `fk_notification_object_2` FOREIGN KEY (`notification_object_id`) REFERENCES `notification_object` (`id`) ,
-  CONSTRAINT `fk_notification_actor_id_idx` FOREIGN KEY (`actor_id`) REFERENCES `user` (`id`));
-
-INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('John Doe', '1990-05-15', 1);
-INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('Jane Smith', '1988-10-20', 2);
-INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('Michael Johnson', '1995-03-28', 1);
-INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('Emily Brown', '1992-07-12', 3);
-INSERT INTO `user` (`user_name`, `dob`, `role`) VALUES ('William Davis', '1985-12-30', 2);
-
-INSERT INTO `notification_entity` (`entity_name`) VALUES ('comment');
-INSERT INTO `notification_entity` (`entity_name`) VALUES ('post');
-INSERT INTO `notification_entity` (`entity_name`) VALUES ('livestream');
-
-INSERT INTO `notification_entity_type` (`type_name`, `entity_id`, `description`)
-VALUES 
-('new comment', (SELECT `entity_id` FROM `notification_entity` WHERE `entity_name`='comment'), 'Có bình luận mới'),
-('reply comment', (SELECT `entity_id` FROM `notification_entity` WHERE `entity_name`='comment'), 'Có người phản hồi'),
-('react comment', (SELECT `entity_id` FROM `notification_entity` WHERE `entity_name`='comment'), 'Có người tương tác với bình luận');
-
-
-
-CREATE TABLE IF NOT EXISTS `post` (
- `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
- `content` VARCHAR(255) NOT NULL,
- `thumbnail` VARCHAR(255),
- `owner` INT UNSIGNED NOT NULL,
- `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
- `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
- PRIMARY KEY (`id`),
- CONSTRAINT `fk_user` FOREIGN KEY (`owner`) REFERENCES `user`(`id`)
-);
-
-CREATE TABLE IF NOT EXISTS `comment` (
- `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
- `post_id` INT NOT NULL,
- `content` VARCHAR(255) NOT NULL,
- `parentComment` INT UNSIGNED,
- `level` INT, 
- `owner` INT UNSIGNED NOT NULL,
- `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
- `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
- PRIMARY KEY (`id`),
- CONSTRAINT `fk_post_comment` FOREIGN KEY (`post_id`) REFERENCES `post` (`id`),
- CONSTRAINT `fk_user_2` FOREIGN KEY (`owner`) REFERENCES `user` (`id`),
- CONSTRAINT `fk_parent_comment` FOREIGN KEY (`parentComment`) REFERENCES `comment` (`id`)
-);
-
-
+CREATE TABLE `comments`(
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `post_id` INT UNSIGNED NOT NULL,
+    `content` VARCHAR(255) NOT NULL,
+    `parent_comment` INT UNSIGNED NULL,
+    `level` INT NULL,
+    `owner_id` INT UNSIGNED NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(), `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP());
+    
+    ALTER TABLE
+    `notification_entity_types` ADD CONSTRAINT `notification_entity_types_entity_id_foreign` FOREIGN KEY(`entity_id`) REFERENCES `notification_entities`(`id`);
+    ALTER TABLE
+    `comments` ADD CONSTRAINT `comments_parent_comment_foreign` FOREIGN KEY(`parent_comment`) REFERENCES `comments`(`id`);
+	ALTER TABLE
+    `comments` ADD CONSTRAINT `comments_owner_id_foreign` FOREIGN KEY(`owner_id`) REFERENCES `users`(`id`);
+    ALTER TABLE
+    `posts` ADD CONSTRAINT `posts_owner_id_foreign` FOREIGN KEY(`owner_id`) REFERENCES `users`(`id`);
+	ALTER TABLE
+    `notifications` ADD CONSTRAINT `notifications_entity_type_foreign` FOREIGN KEY(`entity_type`) REFERENCES `notification_entity_types`(`id`);
+    ALTER TABLE
+    `notifications` ADD CONSTRAINT `notifications_actor_id_foreign` FOREIGN KEY(`actor_id`) REFERENCES `users`(`id`);
+    ALTER TABLE
+    `notification_visits` ADD CONSTRAINT `notification_visits_notifier_id_foreign` FOREIGN KEY(`notifier_id`) REFERENCES `users`(`id`);
+    ALTER TABLE
+    `notification_room_settings` ADD CONSTRAINT `notification_room_settings_notifier_id_foreign` FOREIGN KEY(`notifier_id`) REFERENCES `users`(`id`);
+    ALTER TABLE
+    `comments` ADD CONSTRAINT `comments_post_id_foreign` FOREIGN KEY(`post_id`) REFERENCES `posts`(`id`);
+    ALTER TABLE
+    `notification_visits` ADD CONSTRAINT `notification_visits_notification_id_foreign` FOREIGN KEY(`notification_id`) REFERENCES `notifications`(`id`);
+	ALTER TABLE
+    `notification_room_settings` ADD CONSTRAINT `notification_entities_entity_name_foreign` FOREIGN KEY(`entity_id`) REFERENCES `notification_entities`(`id`);
